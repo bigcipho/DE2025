@@ -1,0 +1,69 @@
+--Question 1. Understanding docker first run
+$ docker run -it --entrypoint=bash python:3.12.8
+root@b6c6dae69eaf:/# pip --version
+pip 24.3.1 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+root@b6c6dae69eaf:/#
+
+
+
+--Question 2. Understanding Docker networking and docker-compose
+postgres
+5433
+
+--Question 3. Trip Segmentation Count
+
+
+select COUNT(1) from green_taxi_trips
+where trip_distance <=1
+and lpep_pickup_datetime >='2019-10-01' and lpep_dropoff_datetime < '2019-11-01'
+UNION
+select COUNT(1) from green_taxi_trips
+where trip_distance >1 and trip_distance <=3
+and lpep_pickup_datetime >='2019-10-01' and lpep_dropoff_datetime < '2019-11-01'
+UNION
+select COUNT(1) from green_taxi_trips
+where trip_distance > 3 and trip_distance <=7
+and lpep_pickup_datetime >='2019-10-01' and lpep_dropoff_datetime < '2019-11-01'
+UNION
+select COUNT(1) from green_taxi_trips
+where trip_distance > 7 and trip_distance <=10
+and lpep_pickup_datetime >='2019-10-01' and lpep_dropoff_datetime < '2019-11-01'
+UNION
+select COUNT(1) from green_taxi_trips
+where trip_distance > 10
+and lpep_pickup_datetime >='2019-10-01' and lpep_dropoff_datetime < '2019-11-01';
+
+
+--Question 4. Longest trip for each day
+
+
+select CAST(lpep_pickup_datetime as date)
+from green_taxi_trips 
+where trip_distance =(select MAX(trip_distance) from green_taxi_trips);
+
+---------------------------------------------------------------------------
+--Question 5. Three biggest pickup zones
+
+select "PULocationID", SUM(total_amount), b."Zone" 
+from green_taxi_trips a JOIN taxi_zone b ON a."PULocationID"=b."LocationID"
+where CAST("lpep_pickup_datetime" as date) ='2019-10-18'
+GROUP BY  "PULocationID", "Zone"
+ORDER BY SUM(total_amount) desc
+LIMIT 3
+;
+
+
+
+----------------------------------------------------------------------
+
+--Question 6. Largest tip
+
+WITH CTE AS(
+select "DOLocationID","PULocationID", MAX(tip_amount), b."Zone" PickupZone , c."Zone"  DropOffZone
+from green_taxi_trips a JOIN taxi_zone b ON a."PULocationID"=b."LocationID"
+JOIN taxi_zone c ON a."DOLocationID"=c."LocationID"
+where CAST("lpep_pickup_datetime" as date) between '2019-10-01' and '2019-10-31'
+and b."Zone" = 'East Harlem North'
+GROUP BY  "DOLocationID", b."Zone","PULocationID", c."Zone"
+ORDER BY MAX(tip_amount) desc
+LIMIT 1) select DropOffZone from CTE
